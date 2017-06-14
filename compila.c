@@ -92,6 +92,22 @@ void insereRetorno(unsigned char func[], int *index){
 	*index+=2;
 }
 
+void insereConstante(unsigned char func[], int *index, int operando, int n){
+	//coloco primeiro operando em r11
+	//e o segundo em r12
+	func[*index] = 0x41;
+	func[*index+1] = operando==1?0xbb:0xba;
+	*index+=2;
+
+	func[*index] = n & 0xFF;
+	func[*index+1] = (n>> 1*8) & 0xFF;
+	func[*index+2] = (n>> 2*8) & 0xFF;
+	func[*index+3] = (n>> 3*8) & 0xFF;
+
+	*index+=4;
+}
+
+
 void insereAtribuicao(unsigned char func[], int *index, char var0, int idx0, char var1, int idx1, char op, char var2, int idx2){
 	unsigned char r10 = 0x55;
 	unsigned char r11 = 0x5d;
@@ -100,26 +116,35 @@ void insereAtribuicao(unsigned char func[], int *index, char var0, int idx0, cha
 	unsigned char daPilha = 0x8b;
 	
 	if(var0=='p') idx0+=4;
-	if(var1=='p') idx1+=4;
-	if(var2=='p') idx2+=4;
 	idx0*=-4;
-	idx1*=-4;
-	idx2*=-4;
 
-	//coloco primeiro operando em r11
-	func[*index] = mover;
-	func[*index+1] = daPilha;
-	func[*index+2] = r11;//para r11
-	func[*index+3] = idx1;
-	*index+=4;
 
-	//coloco segundo operando em r10
-	func[*index] = mover;
-	func[*index+1] = daPilha;
-	func[*index+2] = r10;//para r10
-	func[*index+3] = idx2;
-	*index+=4;
+	if(var1=='$')
+		insereConstante(func, index, 1, idx1);
+	else{
+		if(var1=='p') idx1+=4;
+		idx1*=-4;
+		//coloco primeiro operando em r11
+		func[*index] = mover;
+		func[*index+1] = daPilha;
+		func[*index+2] = r11;//para r11
+		func[*index+3] = idx1;
+		*index+=4;
+	}
 
+	if(var2=='$')
+		insereConstante(func, index, 2, idx2);
+	else{
+		if(var2=='p') idx2+=4;
+		idx2*=-4;
+		//coloco segundo operando em r10
+		func[*index] = mover;
+		func[*index+1] = daPilha;
+		func[*index+2] = r10;//para r10
+		func[*index+3] = idx2;
+		*index+=4;
+	}
+	
 	if(op=='*'){ //somo subtraio ou multiplico r10 com r11
 		func[*index] = 0x45;
 		func[*index+1] = 0x0f;

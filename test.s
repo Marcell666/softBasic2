@@ -62,9 +62,10 @@ movl  -8(%rbp), %r11d
 movl  -12(%rbp), %r11d
 movl  -16(%rbp), %r11d
 
-/*movendo dos parametros para os registradores de operação*/
+/*colocando constantes nos registradores de operação*/
 
-movl  -20(%rbp), %r10d
+movl  $256, %r10d
+movl  $256, %r11d
 
 
 
@@ -87,8 +88,8 @@ ret
 
 
 Eu preciso conhecer os codigos de:
- Passar/de volta parametro para os registradores de operações
- Passar/de volta dos registradores de variavel para os registradores de operações
+ (Passar/de volta) parametro para os registradores de operações
+ (Passar/de volta) dos registradores de variavel para os registradores de operações
  Seria bom se os registradores de operações, variaveis, retorno e parametros  fossem todos separados.
 Posso usar a pilha para variaveis ao inves de registradores.
 Uma operação diz qual função deve ser chamada para aqueles registradores de operações.
