@@ -4,7 +4,8 @@
 #include "compila.h"
 
 struct desvio{
-	int de, para;
+	int de, //index! (e não linha!) que depois devo preencher com a instrução certa
+	 para;// agora sim, linha para a qual devo ir
 };
 
 static void error (const char *msg, int line) {
@@ -132,7 +133,7 @@ void insereAtribuicao(unsigned char func[], int *index, char var0, int idx0, cha
 }
 
 
-void insereDesvio(unsigned char func[], int *index, int qtdLinha, int *linha, char var0, int idx0, int num){
+void insereDesvio(unsigned char func[], int *index, char var0, int idx0, int num){
 
 /*
 
@@ -163,56 +164,37 @@ Para ir para frente preciso guardar em algum lugar todas as vezes que houve um d
 	func[*index+4] = 0x0f;
 	func[*index+5] = 0x85;
 	*index+=6;
-
+	
+	// No index atual, devem ficar as posições que devo preencher depois
+	// Vamos guardar essa posicao
+	desvio[qtdDesvio].de = *index;
+	desvio[qtdDesvio].para = num;
+	qtdDesvio++;
+	/*
 	func[*index] = 00;
 	func[*index+1] = 00;
 	func[*index+2] = 00;
 	func[*index+3] = 00;
+	*/
+	//vamos simplesmente pular tudo isso
+	//despois vamos preencher essa parte.
 	*index += 4;
-	/*
-	int i;
-	for(i=0;i<5;i++)
-		func[*index+i] = somaUm[i];
-  *index+=5;
-  */
 }
 
 
 void corrigeDesvio(unsigned char func[]){
 
 	int i;
-	for(i=0)
-
-	if(var0=='p') idx0+=4;
-	idx0*=-4;
-	
-	//insere compara com zero
-	func[*index] = 0x83;
-	func[*index+1] = 0x7d;
-
-	//insere idx0 
-	func[*index+2] = idx0;
-	//0x00
-	func[*index+3] = 0x00;
-
-	//insere pulaSeDiferente
-	func[*index+4] = 0x0f;
-	func[*index+5] = 0x85;
-	*index+=6;
-
-
-	end = linha[num-1]-(*index+4);
-	func[*index] = end & 0xFF;
-	func[*index+1] = (end>> 1*8) & 0xFF;
-	func[*index+2] = (end>> 2*8) & 0xFF;
-	func[*index+3] = (end>> 3*8) & 0xFF;
-	*index += 4;
-	/*
-	int i;
-	for(i=0;i<5;i++)
-		func[*index+i] = somaUm[i];
-  *index+=5;
-  */
+	int end, num, index;
+	for(i=0;i<qtdDesvio;i++){
+		index = desvio[i].de;
+		num = desvio[i].para;
+		end = linha[num-1]-(index+4);
+		func[index++] = end & 0xFF;
+		func[index++] = (end>> 1*8) & 0xFF;
+		func[index++] = (end>> 2*8) & 0xFF;
+		func[index++] = (end>> 3*8) & 0xFF;
+	}
 }
 
 /*
@@ -304,7 +286,7 @@ funcp compila(FILE *f){
 							error("comando invalido", qtdLinha);
 						printf("if %c%d %d\n", var0, idx0, num);
 						linha[qtdLinha-1] = index;
-						insereDesvio(func, &index, qtdLinha, linha, var0, idx0, num);
+						insereDesvio(func, &index, var0, idx0, num);
 					break;
 			}
 			default: error("comando desconhecido", qtdLinha);
