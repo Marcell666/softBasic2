@@ -109,7 +109,7 @@ Uma operação diz qual função deve ser chamada para aqueles registradores de 
    4:	83 07 01             	addl   $0x1,(%rdi)
    7:	c9                   	leaveq
    8:	c3                   	retq 
-*/
+
 
 potencia
 v1 = p3 * p3
@@ -123,3 +123,4 @@ ret
 p1 = 2
 p3 = 1
 p4 = 0
+*/

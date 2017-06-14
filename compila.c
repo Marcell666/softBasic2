@@ -3,10 +3,20 @@
 #include <string.h>
 #include "compila.h"
 
+#define N 1024
+#define MAX_LINHAS 50
+
 struct desvio{
 	int de, //index! (e não linha!) que depois devo preencher com a instrução certa
 	 para;// agora sim, linha para a qual devo ir
 };
+
+//A cada linha que avanço na leitura do codigo, guardo aqui aonde vou começar a preencher o vetor que guarda o codigo de maquina.
+//Usando esse vetor posso implementar o desvio
+static int linha[MAX_LINHAS];
+int qtdLinha = 1;
+static Desvio desvio[MAX_LINHAS];
+int qtdDesvio = 0;
 
 static void error (const char *msg, int line) {
 	fprintf(stderr, "erro %s na linha %d\n", msg, line);
@@ -146,7 +156,6 @@ Para ir para frente preciso guardar em algum lugar todas as vezes que houve um d
 
 //	unsigned char comparaComZero[]={0x83, 0x7d};
 //	unsigned char pulaSeDiferente[]={0x0f, 0x85};
-	int end = 0;
 	
 	if(var0=='p') idx0+=4;
 	idx0*=-4;
@@ -177,13 +186,12 @@ Para ir para frente preciso guardar em algum lugar todas as vezes que houve um d
 	func[*index+3] = 00;
 	*/
 	//vamos simplesmente pular tudo isso
-	//despois vamos preencher essa parte.
+	//depois vamos preencher essa parte.
 	*index += 4;
 }
 
 
 void corrigeDesvio(unsigned char func[]){
-
 	int i;
 	int end, num, index;
 	for(i=0;i<qtdDesvio;i++){
@@ -229,17 +237,6 @@ void end(unsigned char func[], int *index){
 		func[*index+i] = v[i];
 	*index+=2;
 }
-
-
-#define N 1024
-#define MAX_LINHAS 50
-
-//A cada linha que avanço na leitura do codigo, guardo aqui aonde vou começar a preencher o vetor que guarda o codigo de maquina.
-//Usando esse vetor posso implementar o desvio
-static int linha[MAX_LINHAS];
-int qtdLinha = 1;
-static Desvio desvio[MAX_LINHAS];
-int qtdDesvio = 0;
 
 funcp compila(FILE *f){
 
@@ -321,8 +318,5 @@ funcp compila(FILE *f){
 8b 45 fc
 
 c9 c3
-
-
-
 
 */
