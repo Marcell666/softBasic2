@@ -3,6 +3,10 @@
 #include <string.h>
 #include "compila.h"
 
+struct desvio{
+	int de, para;
+};
+
 static void error (const char *msg, int line) {
 	fprintf(stderr, "erro %s na linha %d\n", msg, line);
 	exit(EXIT_FAILURE);
@@ -128,8 +132,17 @@ void insereAtribuicao(unsigned char func[], int *index, char var0, int idx0, cha
 }
 
 
-void insereDesvio(unsigned char func[], int *index, int *linha, char var0, int idx0, int num){
-	/*Digamos que este codigo esteja certo..*/
+void insereDesvio(unsigned char func[], int *index, int qtdLinha, int *linha, char var0, int idx0, int num){
+
+/*
+
+Esta faltando uma coisa, se o desvio for para frente, vai dar erro.
+
+Para ir para frente preciso guardar em algum lugar todas as vezes que houve um desvio para frente. E a cada linha que avançar, checo se alguem quer avançar para aquela linha, se sim, volto naquela instrução e preencho o que falta (desvio em relaçao a posiçao atual).
+
+*/
+
+
 //	unsigned char comparaComZero[]={0x83, 0x7d};
 //	unsigned char pulaSeDiferente[]={0x0f, 0x85};
 	int end = 0;
@@ -151,7 +164,44 @@ void insereDesvio(unsigned char func[], int *index, int *linha, char var0, int i
 	func[*index+5] = 0x85;
 	*index+=6;
 
-	end = *index-linha[num];
+	func[*index] = 00;
+	func[*index+1] = 00;
+	func[*index+2] = 00;
+	func[*index+3] = 00;
+	*index += 4;
+	/*
+	int i;
+	for(i=0;i<5;i++)
+		func[*index+i] = somaUm[i];
+  *index+=5;
+  */
+}
+
+
+void corrigeDesvio(unsigned char func[]){
+
+	int i;
+	for(i=0)
+
+	if(var0=='p') idx0+=4;
+	idx0*=-4;
+	
+	//insere compara com zero
+	func[*index] = 0x83;
+	func[*index+1] = 0x7d;
+
+	//insere idx0 
+	func[*index+2] = idx0;
+	//0x00
+	func[*index+3] = 0x00;
+
+	//insere pulaSeDiferente
+	func[*index+4] = 0x0f;
+	func[*index+5] = 0x85;
+	*index+=6;
+
+
+	end = linha[num-1]-(*index+4);
 	func[*index] = end & 0xFF;
 	func[*index+1] = (end>> 1*8) & 0xFF;
 	func[*index+2] = (end>> 2*8) & 0xFF;
@@ -164,6 +214,17 @@ void insereDesvio(unsigned char func[], int *index, int *linha, char var0, int i
   *index+=5;
   */
 }
+
+/*
+
+d    b
+1101 1011
+0010 0101
+
+
+
+
+*/
 
 void init(unsigned char func[], int *index){
 	unsigned char regAtiv[]={0x55, 0x48, 0x89, 0xe5};
@@ -190,9 +251,17 @@ void end(unsigned char func[], int *index){
 
 
 #define N 1024
+#define MAX_LINHAS 50
+
+//A cada linha que avanço na leitura do codigo, guardo aqui aonde vou começar a preencher o vetor que guarda o codigo de maquina.
+//Usando esse vetor posso implementar o desvio
+static int linha[MAX_LINHAS];
+int qtdLinha = 1;
+static Desvio desvio[MAX_LINHAS];
+int qtdDesvio = 0;
 
 funcp compila(FILE *f){
-	int qtdLinha = 1;
+
 	int i;
 	int  c;
 	//Queremos adicionar codigo no final do vetor
@@ -200,9 +269,8 @@ funcp compila(FILE *f){
 	//quanto espaço devemos alocar?
 	unsigned char *func = (unsigned char*) malloc(N*sizeof(unsigned char));
 	//Esse vetor guarda, para cada linha do codigo fonte, que comando equivale no codigo de maquina.
-	//A cada linha que avanço na leitura do codigo, guardo aqui aonde vou começar a preencher o vetor que guarda o codigo de maquina.
-	//Usando esse vetor posso implementar o desvio
-	int *linha = (int*) malloc(N*sizeof(int));
+
+
 
 	init(func, &index);
 
@@ -237,7 +305,7 @@ funcp compila(FILE *f){
 							error("comando invalido", qtdLinha);
 						printf("if %c%d %d\n", var0, idx0, num);
 						linha[qtdLinha-1] = index;
-						insereDesvio(func, &index, linha, var0, idx0, num);
+						insereDesvio(func, &index, qtdLinha, linha, var0, idx0, num);
 					break;
 			}
 			default: error("comando desconhecido", qtdLinha);
@@ -245,8 +313,9 @@ funcp compila(FILE *f){
 	    qtdLinha ++;
 	    fscanf(f, " ");
 	}
+	corrigeDesvio(func);
 	for (i=0;i<index;i++)
-		printf("%x ",  func[i]);
+		printf("%d:%x ", i, func[i]);
 	printf("\n");
 	//end(func, &index);
 	return (funcp)func;
